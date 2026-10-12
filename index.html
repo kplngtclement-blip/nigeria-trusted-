@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WhatsApp Broadcast Helper - Nigeria 🇳🇬</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0b141a;
+    color: #e9edef;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  .container { max-width: 600px; margin: 0 auto; }
+  h1 {
+    font-size: 22px; margin-bottom: 6px;
+    background: linear-gradient(90deg, #25D366, #128C7E);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .sub { font-size: 13px; color: #8696a0; margin-bottom: 20px; }
+  .card {
+    background: #111b21; border: 1px solid #222d34;
+    border-radius: 12px; padding: 18px; margin-bottom: 16px;
+  }
+  label { display: block; font-size: 13px; color: #8696a0; margin-bottom: 6px; }
+  input, textarea {
+    width: 100%; padding: 10px 12px; border-radius: 8px;
+    border: 1px solid #2a3942; background: #202c33;
+    color: #e9edef; font-size: 14px; outline: none;
+    font-family: inherit;
+  }
+  input:focus, textarea:focus { border-color: #25D366; }
+  button {
+    background: #25D366; color: #0b141a; border: none;
+    padding: 10px 18px; border-radius: 8px; font-weight: 600;
+    cursor: pointer; font-size: 14px; margin-top: 10px;
+  }
+  button:hover { background: #1eb954; }
+  button.secondary {
+    background: transparent; color: #25D366;
+    border: 1px solid #25D366;
+  }
+  .contact-list { margin-top: 12px; }
+  .contact {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 10px; background: #202c33; border-radius: 8px;
+    margin-bottom: 6px; font-size: 14px;
+  }
+  .contact button {
+    background: #ef4444; color: white; padding: 4px 10px;
+    font-size: 12px; margin: 0;
+  }
+  .send-all {
+    width: 100%; background: #25D366; padding: 14px;
+    font-size: 16px; margin-top: 12px;
+  }
+  .note {
+    font-size: 12px; color: #8696a0; line-height: 1.5;
+    background: #182229; padding: 12px; border-radius: 8px;
+    border-left: 3px solid #f59e0b;
+  }
+  .row { display: flex; gap: 8px; align-items: center; }
+  .row input { flex: 1; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>WhatsApp Broadcast Helper 🇳🇬</h1>
+  <p class="sub">Add Nigerian numbers & open chats quickly</p>
+
+  <div class="card">
+    <label>Add Contact (Nigerian mobile)</label>
+    <div class="row">
+      <input id="phone" type="tel" placeholder="08012345678 or 2348012345678">
+      <button onclick="addContact()">Add</button>
+    </div>
+    <div class="contact-list" id="list"></div>
+  </div>
+
+  <div class="card">
+    <label>Your Message</label>
+    <textarea id="msg" rows="4" placeholder="Type your broadcast message..."></textarea>
+  </div>
+
+  <button class="send-all" onclick="openAll()">Open Chats Sequentially</button>
+  <button class="secondary" style="width:100%;margin-top:8px" onclick="copyLinks()">Copy All wa.me Links</button>
+
+  <div class="note" style="margin-top:16px">
+    ⚠️ <strong>Important:</strong> This tool only opens WhatsApp chats — you still press <em>Send</em> in WhatsApp.
+    Bulk auto-sending violates WhatsApp's terms and will get your number banned.
+    Only message people who gave you permission.
+  </div>
+</div>
+
+<script>
+let contacts = JSON.parse(localStorage.getItem('wa_contacts') || '[]');
+
+function normalizeNG(num) {
+  num = num.replace(/\D/g, '');
+  if (num.startsWith('0')) num = '234' + num.slice(1);
+  if (num.startsWith('234')) return num;
+  if (num.length === 10) return '234' + num;
+  return num;
+}
+
+function addContact() {
+  const input = document.getElementById('phone');
+  const raw = input.value.trim();
+  if (!raw) return;
+  const norm = normalizeNG(raw);
+  if (norm.length < 12) { alert('Enter a valid Nigerian number'); return; }
+  if (!contacts.includes(norm)) {
+    contacts.push(norm);
+    save(); render();
+  }
+  input.value = '';
+}
+
+function removeContact(i) {
+  contacts.splice(i, 1);
+  save(); render();
+}
+
+function save() { localStorage.setItem('wa_contacts', JSON.stringify(contacts)); }
+
+function render() {
+  const list = document.getElementById('list');
+  if (!contacts.length) { list.innerHTML = '<p style="color:#8696a0;font-size:13px">No contacts yet.</p>'; return; }
+  list.innerHTML = contacts.map((c, i) =>
+    `<div class="contact">
+       <span>🇳🇬 +${c}</span>
+       <button onclick="removeContact(${i})">✕</button>
+     </div>`).join('');
+}
+
+function openAll() {
+  if (!contacts.length) return alert('Add at least one contact');
+  const msg = encodeURIComponent(document.getElementById('msg').value || '');
+  contacts.forEach((c, i) => {
+    setTimeout(() => {
+      window.open(`https://wa.me/${c}?text=${msg}`, '_blank');
+    }, i * 800);
+  });
+}
+
+function copyLinks() {
+  const msg = encodeURIComponent(document.getElementById('msg').value || '');
+  const links = contacts.map(c => `https://wa.me/${c}?text=${msg}`).join('\n');
+  navigator.clipboard.writeText(links).then(() => alert('Links copied!'));
+}
+
+render();
+</script>
+</body>
+</html>
